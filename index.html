@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>jQuery CRUD</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        form {
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid black;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            text-align: left;
+        }
+
+        button {
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>CRUD with jQuery</h1>
+
+    <form id="crud-form">
+        <input type="hidden" id="id" />
+        <label>
+            Name:
+            <input type="text" id="name" required />
+        </label>
+        <br />
+        <label>
+            Alamat:
+            <input type="text" id="alamat" required />
+        </label>
+        <br />
+        <label>
+            Email:
+            <input type="email" id="email" required />
+        </label>
+        <br />
+        <button type="submit">Save</button>
+    </form>
+
+    <h2>Data List</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Alamat</th>
+                <th>Email</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="data-table-body">
+            <!-- Data rows will go here -->
+        </tbody>
+    </table>
+
+    <script>
+        const apiUrl = 'https://63e1cb154324b12d963ea84a.mockapi.io/api/v1/testing';
+
+        // Fetch and display data
+        function fetchData() {
+            $.get(apiUrl, function (data) {
+                const tbody = $('#data-table-body');
+                tbody.empty();
+
+                data.forEach(item => {
+                    const row = `
+            <tr>
+              <td>${item.id}</td>
+              <td>${item.name}</td>
+              <td>${item.alamat}</td>
+              <td>${item.email}</td>
+              <td>
+                <button class="edit-btn" data-id="${item.id}">Edit</button>
+                <button class="delete-btn" data-id="${item.id}">Delete</button>
+              </td>
+            </tr>
+          `;
+                    tbody.append(row);
+                });
+            });
+        }
+
+        // Save or update data
+        function saveData(event) {
+            event.preventDefault();
+
+            const id = $('#id').val();
+            const name = $('#name').val();
+            const alamat = $('#alamat').val();
+            const email = $('#email').val();
+
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? `${apiUrl}/${id}` : apiUrl;
+
+            $.ajax({
+                url,
+                method,
+                contentType: 'application/json',
+                data: JSON.stringify({ name, alamat, email }),
+                success: function () {
+                    $('#crud-form')[0].reset();
+                    fetchData();
+                },
+                error: function () {
+                    alert('Error saving data');
+                },
+            });
+        }
+
+        // Edit data
+        function editData(id) {
+            $.get(`${apiUrl}/${id}`, function (data) {
+                $('#id').val(data.id);
+                $('#name').val(data.name);
+                $('#alamat').val(data.alamat);
+                $('#email').val(data.email);
+            });
+        }
+
+        // Delete data
+        function deleteData(id) {
+            if (confirm('Are you sure you want to delete this record?')) {
+                $.ajax({
+                    url: `${apiUrl}/${id}`,
+                    method: 'DELETE',
+                    success: function () {
+                        fetchData();
+                    },
+                    error: function () {
+                        alert('Error deleting data');
+                    },
+                });
+            }
+        }
+
+        // Event Listeners
+        $(document).ready(function () {
+            // Fetch initial data
+            fetchData();
+
+            // Save or update data on form submit
+            $('#crud-form').on('submit', saveData);
+
+            // Edit button click
+            $(document).on('click', '.edit-btn', function () {
+                const id = $(this).data('id');
+                editData(id);
+            });
+
+            // Delete button click
+            $(document).on('click', '.delete-btn', function () {
+                const id = $(this).data('id');
+                deleteData(id);
+            });
+        });
+    </script>
+</body>
+
+</html>
